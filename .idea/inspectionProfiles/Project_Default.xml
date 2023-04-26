@@ -1,0 +1,74 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyGlobalUndefinedInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="1">
+            <item index="0" class="java.lang.String" itemvalue="setuptools" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8Inspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="E731" />
+          <option value="E741" />
+          <option value="E501" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="N802" />
+          <option value="N806" />
+          <option value="N803" />
+          <option value="N801" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyTypeCheckerInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="list.__getitem__" />
+          <option value="cv2.imread" />
+          <option value="cv2.resize" />
+          <option value="cv2.INTER_AREA" />
+          <option value="cv2.cvtColor" />
+          <option value="cv2.COLOR_BGR2RGB" />
+          <option value="cv2.bitwise_or" />
+          <option value="cv2.addWeighted" />
+          <option value="cv2.blur" />
+          <option value="cv2.medianBlur" />
+          <option value="cv2.GaussianBlur" />
+          <option value="cv2.COLOR_BGR2GRAY" />
+          <option value="cv2.threshold" />
+          <option value="cv2.THRESH_BINARY" />
+          <option value="cv2.THRESH_OTSU" />
+          <option value="cv2.erode" />
+          <option value="cv2.dilate" />
+          <option value="cv2.morphologyEx" />
+          <option value="cv2.MORPH_OPEN" />
+          <option value="cv2.MORPH_CLOSE" />
+          <option value="cv2.subtract" />
+          <option value="cv2.connectedComponents" />
+          <option value="cv2.watershed" />
+          <option value="cv2.split" />
+          <option value="cv2.MORPH_GRADIENT" />
+          <option value="cv2.TERM_CRITERIA_EPS" />
+          <option value="cv2.TERM_CRITERIA_MAX_ITER" />
+          <option value="cv2.kmeans" />
+          <option value="cv2.KMEANS_RANDOM_CENTERS" />
+          <option value="cv2.imwrite" />
+          <option value="cv2.ROTATE_90_COUNTERCLOCKWISE" />
+          <option value="cv2.rotate" />
+          <option value="cv2.flip" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
