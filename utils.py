@@ -27,7 +27,7 @@ def DATA_PATH():
 def dump_frequencies():
     f = np.array([0.01000, 0.03667, 0.05000, 0.05667, 0.06333, 0.07000, 0.08000, 0.09000, 0.10000, 0.11333, 0.12667, 0.14000, 0.16000, 0.17667, 0.20000, 0.22333, 0.25000, 0.28333, 0.31667, 0.35333, 0.39667, 0.44667, 0.50000, 0.56333, 0.63000, 0.70667, 0.79333, 0.89000, 1.00000, 1.12333, 1.26000, 1.41333, 1.58333, 1.77667, 1.99667, 2.24000, 2.51333, 2.82000, 3.16333, 3.54667, 3.98000, 4.46667, 5.01333, 5.62333, 6.31000, 7.08000, 7.94333, 8.91333, 10.00000, 11.22000, 12.59000, 14.12667, 15.85000, 17.78333, 19.95333, 22.38667, 25.12000, 28.18333, 31.62333, 35.48000, 39.81000, 44.66667, 50.12000, 56.23333, 63.09667, 70.79333, 79.43333, 89.12333, 100.00000, 112.20333, 125.89333, 141.25333, 158.49000, 177.82667, 199.52667, 223.87333, 251.18667, 281.83667, 316.22667, 354.81333, 398.10667, 446.68333, 501.18667, 562.34000, 630.95667, 707.94333, 794.32667, 891.25000, 1000.00000])
     print(f.shape)
-    with open('frequencies.pickle', 'wb') as handle:
+    with open('Pickle data/frequencies.pickle', 'wb') as handle:
         pickle.dump(f, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -47,7 +47,7 @@ def get_frequencies():
     Get frequencies used for collecting EIS data using pickle file.
     :return:
     """
-    path = os.path.join(PROJECT_PATH(), 'frequencies.pickle')
+    path = os.path.join(PROJECT_PATH(), 'Pickle data/frequencies.pickle')
     with open(path, 'rb') as input_file:
         frequencies = pickle.load(input_file)
     return frequencies.reshape((-1, 1))
