@@ -4,7 +4,7 @@ import pickle
 
 
 def PROJECT_PATH():
-    main_folder = 'PFE'
+    main_folder = 'Battery-SoC-Prediction'
     path = os.path.join(os.getcwd())
     i, j = len(path) - 1, len(main_folder) - 1
     while i != j:
