@@ -87,13 +87,14 @@ def GDRT(freq, freq0, Z, _lambda=0.1, regularized=True):
     return A, x, b, b_hat, residuals
 
 
-def L_curve(freq, freq0, Z):
+def L_curve(freq, freq0, Z, plot=True):
     # TODO Add plot function for L_curve
     """
     The use of L-Curve technique to find the most optimum regularization Term.
     :param freq:
     :param freq0:
-    :param Z:
+    :param Z: Impedance
+    :param plot: if you want to plot loss at each lambda
     :return: return Best Lambda.
     """
 
@@ -123,15 +124,15 @@ def L_curve(freq, freq0, Z):
     for _lambda in lambdas:
         _, x, _, _, residuals = GDRT(freq, freq0, Z, _lambda=_lambda, regularized=True)
         loss.append((residuals.T @ residuals)[0, 0])
-    # fig, ax1 = plt.subplots()
-    # ax1.set_xlabel('lambda')
-    # ax1.set_ylabel('Loss')
-    # ax1.semilogx(lambdas, loss, 'x-')
-    # ax1.invert_xaxis()
-    # ax1.tick_params(axis='y')
-#
-    # fig.tight_layout()
-    # plt.show()
+    if plot:
+        fig, ax1 = plt.subplots()
+        ax1.set_xlabel('lambda')
+        ax1.set_ylabel('Loss')
+        ax1.semilogx(lambdas, loss, 'x-')
+        ax1.invert_xaxis()
+        ax1.tick_params(axis='y')
+        fig.tight_layout()
+        plt.show()
     return extract_lambda(loss, lambdas)
 
 

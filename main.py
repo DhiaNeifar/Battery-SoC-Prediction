@@ -1,5 +1,8 @@
-from utils import get_frequencies, get_frequencies0
 from Data.data import import_data, save_data
+from utils import get_frequencies, get_frequencies0
+
+
+import numpy as np
 
 
 def main():

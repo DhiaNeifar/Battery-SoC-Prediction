@@ -1,7 +1,5 @@
-from utils import DATA_PATH, get_frequencies, get_frequencies0, \
-    extract_line, extract_peaks, divide_signal, dump_variable
-from plot import plot_IS, plot_signal, plot_Residuals
-from Preprocessing.tools import GDRT, LKK, L_curve
+from utils import DATA_PATH, extract_line, divide_signal, extract_peaks, dump_variable
+from Preprocessing.tools import LKK, L_curve, GDRT
 from Machine_Learning.gradient_descent import gradient_descent
 
 
@@ -53,21 +51,22 @@ def import_data():
     impedance_data = matlab_table["impedanceData2"]
     return Formatting(impedance_data)
 
-    
+
 def save_data(data, freq, freq0):
-    lambdas = []
+    # lambdas = []
     R, L, C = [], [], []
     RC_means, RC_standard_deviations, RC_Loss = [], [], []
     RL_means, RL_standard_deviations, RL_Loss = [], [], []
-    for line in tqdm(range(len(data))):
+
+    for line in range(len(data)):
+        print(line)
         Z = extract_line(data, index=line)
 
         Z = LKK(freq, freq0, Z)
 
-        _lambda = L_curve(freq, freq0, Z)
-        lambdas.append(_lambda)
-
-        A, x, b, b_hat, residuals = GDRT(freq, freq0, Z, _lambda=_lambda)
+        # _lambda = L_curve(freq, freq0, Z, plot=True)
+        # lambdas.append(_lambda)
+        A, x, b, b_hat, residuals = GDRT(freq, freq0, Z, _lambda=0.3)
         r, l, c, RC, RL = divide_signal(x)
 
         R.append(r)
@@ -77,19 +76,19 @@ def save_data(data, freq, freq0):
         RC_peaks = extract_peaks(np.squeeze(RC), np.squeeze(freq0))
         RL_peaks = extract_peaks(np.squeeze(RL), np.squeeze(freq0))
 
-        rc_means, rc_standard_deviations, rc_loss = gradient_descent(np.squeeze(RC), np.squeeze(freq0), RC_peaks)
-        el_means, el_standard_deviations, el_loss = gradient_descent(np.squeeze(RL), np.squeeze(freq0), RL_peaks)
+        rc_means, rc_standard_deviations, rc_loss = gradient_descent(np.squeeze(RC), np.squeeze(freq0), RC_peaks, plot=False)
 
         RC_means.append(rc_means)
-        RL_means.append(el_means)
-
-        RL_standard_deviations.append(el_standard_deviations)
         RC_standard_deviations.append(rc_standard_deviations)
-
-        RL_Loss.append(el_loss)
         RC_Loss.append(rc_loss)
 
-    dump_variable('Lambdas', lambdas)
+        rl_means, rl_standard_deviations, rl_loss = gradient_descent(np.squeeze(RL), np.squeeze(freq0), RL_peaks, plot=False)
+
+        RL_means.append(rl_means)
+        RL_standard_deviations.append(rl_standard_deviations)
+        RL_Loss.append(rl_loss)
+
+    # dump_variable('Lambdas', lambdas)
     dump_variable('R', R)
     dump_variable('L', L)
     dump_variable('C', C)
