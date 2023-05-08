@@ -1,4 +1,4 @@
-from utils import _peaks
+from utils import amplitudes_means_from_peaks
 
 
 import matplotlib.pyplot as plt
@@ -8,6 +8,12 @@ import numpy as np
 # TODO : Cleaner + Documented Code
 
 def plot_IS(Z, titles):
+    """
+    Plot Impedance Spectroscopy
+    :param Z: List of Impedance
+    :param titles: Name of each Element
+    :return:
+    """
     for index, z in enumerate(Z):
         plt.plot(z.real, -z.imag, label=f'{titles[index]}')
     plt.title('Impedance Spectroscopy')
@@ -19,6 +25,7 @@ def plot_IS(Z, titles):
 def plot_signal(signal, freq0, peaks, RC=True):
     # TODO : Draw small circles on the peaks in red for better readability.
     """
+    Plot The signal distribution after GDRT Transformation with x indicating peaks of the signal.
     :param peaks:
     :param signal:
     :param freq0:
@@ -28,7 +35,7 @@ def plot_signal(signal, freq0, peaks, RC=True):
     title = 'Generalized Distribution of Relaxation Times '
     plt.semilogx(np.squeeze(freq0), signal)
     if peaks:
-        amplitudes, means = _peaks(peaks)
+        amplitudes, means = amplitudes_means_from_peaks(peaks)
         plt.plot(means, amplitudes, 'x', color='black', label='peak')
         plt.legend()
     if RC:
@@ -40,6 +47,13 @@ def plot_signal(signal, freq0, peaks, RC=True):
 
 
 def plot_Residuals(b, b_hat, residuals):
+    """
+    Plot the Residual b - b_hat.
+    :param b:
+    :param b_hat:
+    :param residuals:
+    :return:
+    """
     plt.plot(b, 'o', label='b')
     plt.plot(b_hat, label='b_hat')
     plt.title('b, b_hat')
@@ -52,6 +66,12 @@ def plot_Residuals(b, b_hat, residuals):
 
 
 def plot_loss(iterations, loss):
+    """
+    Plot the loss after Gradient Descent Algorithm.
+    :param iterations:
+    :param loss:
+    :return:
+    """
     plt.loglog(list(range(iterations)), loss)
     plt.xlabel('Iterations')
     plt.ylabel('Loss')
@@ -59,6 +79,14 @@ def plot_loss(iterations, loss):
 
 
 def plot_distributions(signal, x_axis, normal_dists, show_sum=True):
+    """
+    Plot different distributions and their sum compared to the original signal.
+    :param signal:
+    :param x_axis:
+    :param normal_dists:
+    :param show_sum:
+    :return:
+    """
     ax = np.squeeze(x_axis)
     for index, distribution in enumerate(normal_dists.T):
         plt.semilogx(ax, distribution, '-', label=f'dist {index + 1}')

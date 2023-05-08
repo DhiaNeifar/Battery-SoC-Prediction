@@ -1,5 +1,5 @@
 from plot import plot_distributions, plot_loss
-from utils import extract_peaks, _peaks, find_std
+from utils import extract_peaks, amplitudes_means_from_peaks, find_std
 
 
 import numpy as np
@@ -49,7 +49,7 @@ def Compute_Gradients(signal, axis, means, stds, distributions):
 def gradient_descent(signal, x_axis, peaks, max_iter=100000, lr_std=100000, plot=True):
     # TODO Add better visualisation method
     """
-    Gradient Descent Algorithm
+    Gradient Descent Algorithm.
     :param signal: Original signal to fit
     :param x_axis: x Axis of the signal
     :param peaks: Peaks of the signal
@@ -58,12 +58,12 @@ def gradient_descent(signal, x_axis, peaks, max_iter=100000, lr_std=100000, plot
     :param plot: if you want to plot distributions and have visualization
     :return: if peaks empty return Null if peaks empty return [0, 0]
     """
-
+    signal, x_axis = np.squeeze(signal), np.squeeze(x_axis)
     if not peaks:
         null = np.zeros((1, 1))
-        return null, null, []
+        return null, null, [-1]
 
-    amplitudes, means = _peaks(peaks)
+    amplitudes, means = amplitudes_means_from_peaks(peaks)
     _means = np.copy(means)
 
     x_axis = np.log(x_axis)
@@ -84,8 +84,8 @@ def gradient_descent(signal, x_axis, peaks, max_iter=100000, lr_std=100000, plot
         standard_deviations -= lr_std * new_std_divs
 
         normal_dists = normal_distribution(x_axis, amplitudes, means, standard_deviations)
-        J = ComputeCost(signal, normal_dists)
 
+        J = ComputeCost(signal, normal_dists)
         Loss.append(J)
     normal_dists = normal_distribution(x_axis, amplitudes, means, standard_deviations)
     if plot:

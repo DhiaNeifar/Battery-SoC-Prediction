@@ -8,15 +8,15 @@ from math import pi
 import matplotlib.pyplot as plt
 
 
-def LKK(freq, freq0, Z):
+def LKK(f, f_GDRT, Z):
     """
     Apply LKK transformation to the EIS data.
-    :param freq:
-    :param freq0:
+    :param f:
+    :param f_GDRT:
     :param Z:
     :return: LKK-transformed EIS data.
     """
-    coefficients = 1 / (1 + 1j * freq / freq0)
+    coefficients = 1 / (1 + 1j * f / f_GDRT)
     A = np.vstack((coefficients.real, coefficients.imag))
     b = np.vstack((Z.real, Z.imag))
     x = lstsq(A, np.squeeze(b), rcond=None)[0]
@@ -25,11 +25,11 @@ def LKK(freq, freq0, Z):
     return new_Z.reshape((-1, 1))
 
 
-def GDRT(freq, freq0, Z, _lambda=0.1, regularized=True):
+def GDRT(f, f_GDRT, Z, _lambda=0.3, regularized=True):
     """
     Generalized Distribution of Relaxation Function
-    :param freq:
-    :param freq0:
+    :param f:
+    :param f_GDRT:
     :param Z:
     :param _lambda: Regularization Parameter
     :param regularized:
@@ -43,9 +43,8 @@ def GDRT(freq, freq0, Z, _lambda=0.1, regularized=True):
         residuals : b - b_hat   shape ==> (2(m + n) + 3, 1)
     """
 
-    m = freq.shape[0]
-    n = freq0.shape[1]
-    R0 = np.min(Z.real)
+    m = f.shape[0]
+    n = f_GDRT.shape[1]
 
     def MDL_RC(_freq, _freq0):
         return 1 / (1 + 1j * _freq / _freq0)
@@ -61,8 +60,8 @@ def GDRT(freq, freq0, Z, _lambda=0.1, regularized=True):
         RR = np.ones((m, 1))
         X1 = np.zeros((m, 2))
         X2 = np.zeros((m, 1))
-        LL = 2 * pi * freq
-        CC = -1 / (2 * pi * freq)
+        LL = 2 * pi * f
+        CC = -1 / (2 * pi * f)
 
         TMP = np.concatenate((np.concatenate((RR, X1), axis=1), np.concatenate((X2, LL, CC), axis=1)), axis=0)
 
@@ -72,8 +71,8 @@ def GDRT(freq, freq0, Z, _lambda=0.1, regularized=True):
         s = 2 * n + 3
         return np.concatenate((impedance.real, impedance.imag, np.zeros((s, 1))), axis=0)
 
-    A = calculate_A(freq, freq0)
-    b = calculate_b(Z - R0)
+    A = calculate_A(f, f_GDRT)
+    b = calculate_b(Z)
 
     if regularized:
         A = np.concatenate((A, _lambda * np.eye(A.shape[-1])), axis=0)
