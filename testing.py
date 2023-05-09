@@ -5,16 +5,15 @@ from Preprocessing.tools import LKK, GDRT
 
 
 import numpy as np
+import pandas as pd
 
 
 def main():
     data = import_data()
     f = get_frequencies()
     f_GDRT = get_frequencies0()
-    # features_engineering(data)
-    # pickle_data(data, f, f_GDRT)
-    # cell, theta, cycle = 4, 40, 2
-    # analyze_peaks(data, f, f_GDRT, cell, theta, cycle)
+    final_data = pd.read_csv(CSV_DATA(_lambda=0.1))
+
 
 
 if __name__ == '__main__':

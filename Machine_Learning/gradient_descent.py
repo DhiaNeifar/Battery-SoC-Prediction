@@ -1,15 +1,11 @@
 from plot import plot_distributions, plot_loss
-from utils import extract_peaks, amplitudes_means_from_peaks, find_std
+from utils import extract_peaks, amplitudes_means_from_peaks, find_std, normal_distribution
 
 
 import numpy as np
 import random
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-
-
-def normal_distribution(x_axis, amplitude, mean, std):
-    return (amplitude * np.exp(-0.5 * ((x_axis - mean) / std) ** 2)).T
 
 
 def ComputeCost(sig, dists):
@@ -46,51 +42,51 @@ def Compute_Gradients(signal, axis, means, stds, distributions):
     return np.expand_dims(new_means, axis=1), np.expand_dims(new_stds, axis=1)
 
 
-def gradient_descent(signal, x_axis, peaks, max_iter=100000, lr_std=100000, plot=True):
-    # TODO Add better visualisation method
+def gradient_descent(signal, f_GDRT, peaks, max_iter=100000, lr_std=100000, plot=True):
+    # TODO : Add better visualisation method
     """
     Gradient Descent Algorithm.
     :param signal: Original signal to fit
-    :param x_axis: x Axis of the signal
+    :param f_GDRT: x Axis of the signal
     :param peaks: Peaks of the signal
     :param max_iter: Number of iteration till convergence of the algorithm
     :param lr_std: Learning rate for the standard deviations
     :param plot: if you want to plot distributions and have visualization
     :return: if peaks empty return Null if peaks empty return [0, 0]
     """
-    signal, x_axis = np.squeeze(signal), np.squeeze(x_axis)
+    signal, f_GDRT = np.squeeze(signal), np.squeeze(f_GDRT)
     if not peaks:
         null = np.zeros((1, 1))
-        return null, null, [-1]
+        return null, null, null, [-1]
 
     amplitudes, means = amplitudes_means_from_peaks(peaks)
     _means = np.copy(means)
 
-    x_axis = np.log(x_axis)
+    f_GDRT = np.log(f_GDRT)
     means = np.log(means)
 
     standard_deviations = find_std(means)
 
-    normal_dists = normal_distribution(x_axis, amplitudes, means, standard_deviations)
+    normal_dists = normal_distribution(f_GDRT, amplitudes, means, standard_deviations)
     if plot:
-        plot_distributions(signal, np.exp(x_axis), normal_dists, show_sum=False)
+        plot_distributions(signal, f_GDRT, normal_dists, show_sum=False)
     J = ComputeCost(signal, normal_dists)
 
     Loss = [J]
     for _ in tqdm(range(max_iter)):
-        new_means, new_std_divs = Compute_Gradients(signal, x_axis, means, standard_deviations, normal_dists)
+        new_means, new_std_divs = Compute_Gradients(signal, f_GDRT, means, standard_deviations, normal_dists)
 
         # means -= lr_means * new_means
         standard_deviations -= lr_std * new_std_divs
 
-        normal_dists = normal_distribution(x_axis, amplitudes, means, standard_deviations)
+        normal_dists = normal_distribution(f_GDRT, amplitudes, means, standard_deviations)
 
         J = ComputeCost(signal, normal_dists)
         Loss.append(J)
-    normal_dists = normal_distribution(x_axis, amplitudes, means, standard_deviations)
+    normal_dists = normal_distribution(f_GDRT, amplitudes, means, standard_deviations)
     if plot:
         plot_loss(max_iter + 1, Loss)
-        plot_distributions(signal, np.exp(x_axis), normal_dists)
+        plot_distributions(signal, f_GDRT, normal_dists)
     return _means, np.abs(standard_deviations), amplitudes, Loss
 
 

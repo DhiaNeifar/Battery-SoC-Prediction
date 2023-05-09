@@ -86,18 +86,18 @@ def pickle_data(data, f, f_GDRT):
 
         RC_peaks = extract_peaks(RC, f_GDRT)
         RC_peaks_length.append(len(RC_peaks))
-        # _, rc_amplitudes = amplitudes_means_from_peaks(RC_peaks)
+        rc_amplitudes, _ = amplitudes_means_from_peaks(RC_peaks)
         # rc_means, rc_standard_deviations, rc_amplitudes, rc_loss = gradient_descent(RC, f_GDRT, RC_peaks,
         #                                                                             plot=False)
 
         # RC_means.append(rc_means)
         # RC_standard_deviations.append(rc_standard_deviations)
-        # RC_amplitudes.append(rc_amplitudes)
+        RC_amplitudes.append(rc_amplitudes)
         # RC_Loss.append(rc_loss[-1])
 
         RL_peaks = extract_peaks(RL, f_GDRT)
         RL_peaks_length.append(len(RL_peaks))
-        # _, rl_amplitudes = amplitudes_means_from_peaks(RL_peaks)
+        # rl_amplitudes, _ = amplitudes_means_from_peaks(RL_peaks)
         # rl_means, rl_standard_deviations, rl_amplitudes, rl_loss = gradient_descent(RL, f_GDRT, RL_peaks,
         #                                                                             plot=False)
 
@@ -116,17 +116,18 @@ def pickle_data(data, f, f_GDRT):
     # dump_variable('RC_standard_deviations', RC_standard_deviations)
     # dump_variable('RL_standard_deviations', RL_standard_deviations)
 
-    # dump_variable('RC_amplitudes', RC_amplitudes)
+    dump_variable('RC_amplitudes', RC_amplitudes)
     # dump_variable('RL_amplitudes', RL_amplitudes)
 
     # dump_variable('RC_Loss', RC_Loss)
     # dump_variable('RL_Loss', RL_Loss)
 
-    dump_variable('RC_peaks', RC_peaks_length)
-    dump_variable('RL_peaks', RL_peaks_length)
+    # dump_variable('RC_peaks', RC_peaks_length)
+    # dump_variable('RL_peaks', RL_peaks_length)
 
 
 def features_engineering(data):
+    # TODO : Fix RL_amplitudes, it doesn't work as algorithm.
     """
     Feature engineering the data and saving it in CSV format.
     Create dataframe with features to use for Machine Learning
@@ -161,8 +162,8 @@ def features_engineering(data):
                 data.insert(len(data.columns), columns[i], lists[i], True)
     COLUMNS = get_columns(COLUMNS, pickle_files, columns_dict)
     data = data[COLUMNS]
-    print(data.head())
-    data.to_csv(CSV_DATA(_lambda=0.1), index=False)
+    # print(data.head())
+    # data.to_csv(CSV_DATA(_lambda=0.1), index=False)
 
 
 def analyze_peaks(data, f, f_GDRT, cell, theta, cycle):

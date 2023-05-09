@@ -1,8 +1,10 @@
-from utils import amplitudes_means_from_peaks
+from utils import amplitudes_means_from_peaks, CSV_DATA, extract_distributions, \
+    normal_distribution
 
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 # TODO : Cleaner + Documented Code
@@ -78,16 +80,16 @@ def plot_loss(iterations, loss):
     plt.show()
 
 
-def plot_distributions(signal, x_axis, normal_dists, show_sum=True):
+def plot_distributions(signal, f_GDRT, normal_dists, show_sum=True):
     """
     Plot different distributions and their sum compared to the original signal.
     :param signal:
-    :param x_axis:
+    :param f_GDRT:
     :param normal_dists:
     :param show_sum:
     :return:
     """
-    ax = np.squeeze(x_axis)
+    ax = np.squeeze(np.exp(f_GDRT))
     for index, distribution in enumerate(normal_dists.T):
         plt.semilogx(ax, distribution, '-', label=f'dist {index + 1}')
     if show_sum:
@@ -101,7 +103,7 @@ def plot_distributions(signal, x_axis, normal_dists, show_sum=True):
 
 def plot_3D_signals(data, signals, peaks, f_GDRT):
     f_GDRT = np.squeeze(f_GDRT)
-    fig = plt.figure(figsize=(10, 20))
+    _ = plt.figure(figsize=(10, 20))
     ax = plt.axes(projection='3d')
     SoCs = data['SoC'].unique()
     length = f_GDRT.shape
@@ -112,3 +114,14 @@ def plot_3D_signals(data, signals, peaks, f_GDRT):
     ax.invert_yaxis()
     ax.set_yticks(SoCs)
     plt.show()
+
+
+def verify_RC_peaks(signal, line, f_GDRT):
+    final_data = pd.read_csv(CSV_DATA(_lambda=0.1))
+    amplitudes, means, standard_deviations = extract_distributions(final_data, line)
+
+    signal, f_GDRT = np.squeeze(signal), np.squeeze(f_GDRT)
+    f_GDRT = np.log(f_GDRT)
+    means = np.log(means)
+    normal_dists = normal_distribution(f_GDRT, amplitudes, means, standard_deviations)
+    plot_distributions(signal, f_GDRT, normal_dists)

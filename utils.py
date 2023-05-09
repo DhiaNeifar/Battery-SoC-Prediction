@@ -121,7 +121,10 @@ def extract_peaks(x, f_GDRT):
 
 
 def amplitudes_means_from_peaks(peaks):
-    return np.array([peak['amplitude'] for peak in peaks]).reshape((len(peaks), 1)), np.array([peak['mean'] for peak in peaks]).reshape((len(peaks), 1))
+    if peaks:
+        return np.array([peak['amplitude'] for peak in peaks]).reshape((len(peaks), 1)), np.array([peak['mean'] for peak in peaks]).reshape((len(peaks), 1))
+    null = np.zeros((1, 1))
+    return null, null
 
 
 def find_std(means):
@@ -146,6 +149,21 @@ def find_std(means):
     return new_stds
 
 
+def normal_distribution(f_GDRT, amplitude, mean, std):
+    return (amplitude * np.exp(-0.5 * ((f_GDRT - mean) / std) ** 2)).T
+
+
+def extract_distributions(dataframe, index):
+    line = dataframe.iloc[index]
+    peaks = line['RC_peaks']
+    amplitudes, means, standard_divs = np.ones((peaks, 1)), np.ones((peaks, 1)), np.ones((peaks, 1))
+    for index, peak in enumerate(range(peaks), 1):
+        amplitudes[peak, 0] = line[f'RC_amplitude_{index}']
+        means[peak, 0] = line[f'RC_mean_{index}']
+        standard_divs[peak, 0] = line[f'RC_standard_deviation_{index}']
+    return amplitudes, means, standard_divs
+
+
 def find_max(variable):
     maximum = variable[0].shape[0]
     for i in range(1, len(variable)):
@@ -161,10 +179,9 @@ def get_columns(COLUMNS, pickle_files, columns_dict):
         return f'RC_{name}', extract_column(name, RC_list), f'RL_{name}', extract_column(name, RL_list)
         
     pickle_files.sort()
-    print(pickle_files)
     PARASITE_COLUMNS = pickle_files[2::-1]
     pickle_files = pickle_files[3:]
-    RC_files = pickle_files[:len(pickle_files) // 2]
+    RC_files = pickle_files[:len(pickle_files) // 2 + 1]
     RL_files = pickle_files[len(pickle_files) // 2:]
 
     RC_PEAKS, RC_files, RL_PEAKS, RL_files = get_RLC_columns('peaks', RC_files, RL_files)
@@ -181,8 +198,7 @@ def get_columns(COLUMNS, pickle_files, columns_dict):
                RC_PEAKS,
                RC_LOSS,
                *sorted([*columns_dict[RL_COLUMNS[0]],
-                        *columns_dict[RL_COLUMNS[1]],
-                        *columns_dict[RL_COLUMNS[2]]], key=lambda x: int(x.split('_')[-1])),
+                        *columns_dict[RL_COLUMNS[1]],], key=lambda x: int(x.split('_')[-1])),
                RL_PEAKS,
                RL_LOSS,
                ]
