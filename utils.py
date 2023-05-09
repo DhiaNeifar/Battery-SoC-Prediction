@@ -155,7 +155,7 @@ def normal_distribution(f_GDRT, amplitude, mean, std):
 
 def extract_distributions(dataframe, index):
     line = dataframe.iloc[index]
-    peaks = line['RC_peaks']
+    peaks = int(line['RC_peaks'])
     amplitudes, means, standard_divs = np.ones((peaks, 1)), np.ones((peaks, 1)), np.ones((peaks, 1))
     for index, peak in enumerate(range(peaks), 1):
         amplitudes[peak, 0] = line[f'RC_amplitude_{index}']

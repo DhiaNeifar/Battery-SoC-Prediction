@@ -13,7 +13,7 @@ def main():
     f_GDRT = get_frequencies0()
 
     # pickle_data(data, f, f_GDRT)
-    # features_engineering(data)
+    features_engineering(data)
     # cell, theta, cycle = 4, 40, 2
     # analyze_peaks(data, f, f_GDRT, cell, theta, cycle)
 

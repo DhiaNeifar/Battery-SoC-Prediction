@@ -169,7 +169,6 @@ def features_engineering(data):
 
     global pickled_variable
     global _type
-    columns_dict = {}
     for pickle_file in pickle_files:
         try:
             pickled_variable = load_variable(pickle_file)
@@ -185,7 +184,6 @@ def features_engineering(data):
                 for index in range(maximum):
                     lists.append([])
                     columns.append(f'{pickle_file[:-1]}_{index + 1}')
-                columns_dict[pickle_file] = columns
                 for var in pickled_variable:
                     x = var.shape[0]
                     for i in range(x):
