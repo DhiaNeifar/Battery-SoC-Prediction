@@ -82,51 +82,49 @@ def pickle_data(data, f, f_GDRT):
         A, x, b, b_hat, residuals = GDRT(f, f_GDRT, Z - r, _lambda=0.1)
         l, c, RC, RL = divide_signal(x)
 
-        # R.append(r)
-        # L.append(l)
-        # C.append(c)
+        R.append(r)
+        L.append(l)
+        C.append(c)
 
-        # RC_peaks = extract_peaks(RC, f_GDRT)
-        # RC_peaks_length.append(len(RC_peaks))
-        # rc_amplitudes, _ = amplitudes_means_from_peaks(RC_peaks)
+        RC_peaks = extract_peaks(RC, f_GDRT)
+        RC_peaks_length.append(len(RC_peaks))
 
-        # rc_amplitudes, rc_means, rc_standard_deviations, rc_loss = gradient_descent(RC, f_GDRT, RC_peaks,
-        #                                                                             plot=False)
+        rc_amplitudes, rc_means, rc_standard_deviations, rc_loss = gradient_descent(RC, f_GDRT, RC_peaks,
+                                                                                    plot=False)
 
-        # RC_means.append(rc_means)
-        # RC_standard_deviations.append(rc_standard_deviations)
-        # RC_amplitudes.append(rc_amplitudes)
-        # RC_Loss.append(rc_loss[-1])
+        RC_means.append(rc_means)
+        RC_standard_deviations.append(rc_standard_deviations)
+        RC_amplitudes.append(rc_amplitudes)
+        RC_Loss.append(rc_loss[-1])
 
         RL_peaks = extract_peaks(RL, f_GDRT)
         RL_peaks_length.append(len(RL_peaks))
-        rl_amplitudes, _ = amplitudes_means_from_peaks(RL_peaks)
-        # rl_means, rl_standard_deviations, rl_amplitudes, rl_loss = gradient_descent(RL, f_GDRT, RL_peaks,
-        #                                                                             plot=False)
+        rl_means, rl_standard_deviations, rl_amplitudes, rl_loss = gradient_descent(RL, f_GDRT, RL_peaks,
+                                                                                    plot=False)
 
-        # RL_means.append(rl_means)
-        # RL_standard_deviations.append(rl_standard_deviations)
+        RL_means.append(rl_means)
+        RL_standard_deviations.append(rl_standard_deviations)
         RL_amplitudes.append(rl_amplitudes)
-        # RL_Loss.append(rl_loss[-1])
+        RL_Loss.append(rl_loss[-1])
 
-    # dump_variable('R', R)
-    # dump_variable('L', L)
-    # dump_variable('C', C)
+    dump_variable('R', R)
+    dump_variable('L', L)
+    dump_variable('C', C)
 
-    # dump_variable('RC_means', RC_means)
-    # dump_variable('RL_means', RL_means)
+    dump_variable('RC_means', RC_means)
+    dump_variable('RL_means', RL_means)
 
-    # dump_variable('RC_standard_deviations', RC_standard_deviations)
-    # dump_variable('RL_standard_deviations', RL_standard_deviations)
+    dump_variable('RC_standard_deviations', RC_standard_deviations)
+    dump_variable('RL_standard_deviations', RL_standard_deviations)
 
-    # dump_variable('RC_amplitudes', RC_amplitudes)
+    dump_variable('RC_amplitudes', RC_amplitudes)
     dump_variable('RL_amplitudes', RL_amplitudes)
 
-    # dump_variable('RC_Loss', RC_Loss)
-    # dump_variable('RL_Loss', RL_Loss)
+    dump_variable('RC_Loss', RC_Loss)
+    dump_variable('RL_Loss', RL_Loss)
 
-    # dump_variable('RC_peaks', RC_peaks_length)
-    # dump_variable('RL_peaks', RL_peaks_length)
+    dump_variable('RC_peaks', RC_peaks_length)
+    dump_variable('RL_peaks', RL_peaks_length)
 
 
 def features_engineering(data):
@@ -141,8 +139,8 @@ def features_engineering(data):
         def reorder_columns(_list) -> list:
             indexes = [0, 3]
             new_list = _list.copy()
-            for index in indexes:
-                element = _list[index]
+            for _index in indexes:
+                element = _list[_index]
                 new_list.remove(element)
                 new_list.append(element)
             return new_list
@@ -153,7 +151,7 @@ def features_engineering(data):
             new_columns = []
             for column in COLUMNS[:-2]:
                 new_columns.extend([column[:-1] + f'_{_index}' for _index in range(1, _maximum + 1)])
-            new_columns.sort(key=lambda x: int(x.split('_')[-1]))
+            new_columns.sort(key=lambda col: int(col.split('_')[-1]))
             return new_columns + COLUMNS[-2:]
         files.sort(reverse=True)
         PARASITES = files[-3:]
