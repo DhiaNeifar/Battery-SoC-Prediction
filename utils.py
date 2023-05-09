@@ -107,10 +107,10 @@ def divide_signal(x):
 def extract_peaks(x, f_GDRT):
     # TODO : Enhance peaks extraction using differential techniques
     """
-
+    Find peaks in a signal.
     :param x:
     :param f_GDRT:
-    :return:
+    :return: Dictionary with means e.i frequencies and their amplitudes.
     """
     x, f_GDRT = np.squeeze(x), np.squeeze(f_GDRT)
     peaks = []
@@ -155,21 +155,34 @@ def find_max(variable):
 
 
 def get_columns(COLUMNS, pickle_files, columns_dict):
+    def get_RLC_columns(name, RC_list, RL_list):
+        def extract_column(ending, files_list):
+            return [file for file in files_list if file.split('_')[-1] != ending]
+        return f'RC_{name}', extract_column(name, RC_list), f'RL_{name}', extract_column(name, RL_list)
+        
     pickle_files.sort()
+    print(pickle_files)
     PARASITE_COLUMNS = pickle_files[2::-1]
-    RC_COLUMNS = pickle_files[4: 7: 2]
-    RC_PEAKS = pickle_files[5]
-    RC_LOSS = pickle_files[3]
-    RL_COLUMNS = pickle_files[8::2]
-    RL_PEAKS = pickle_files[9]
-    RL_LOSS = pickle_files[7]
+    pickle_files = pickle_files[3:]
+    RC_files = pickle_files[:len(pickle_files) // 2]
+    RL_files = pickle_files[len(pickle_files) // 2:]
+
+    RC_PEAKS, RC_files, RL_PEAKS, RL_files = get_RLC_columns('peaks', RC_files, RL_files)
+    RC_LOSS, RC_COLUMNS, RL_LOSS, RL_COLUMNS = get_RLC_columns('Loss', RC_files, RL_files)
+
+    print(RC_COLUMNS, RL_COLUMNS)
 
     COLUMNS = [*COLUMNS,
                *PARASITE_COLUMNS,
-               *sorted([*columns_dict[RC_COLUMNS[0]], *columns_dict[RC_COLUMNS[1]]], key=lambda x: int(x.split('_')[-1])),
+               *sorted([*columns_dict[RC_COLUMNS[0]],
+                        *columns_dict[RC_COLUMNS[1]],
+                        *columns_dict[RC_COLUMNS[2]]],
+                       key=lambda x: int(x.split('_')[-1])),
                RC_PEAKS,
                RC_LOSS,
-               *sorted([*columns_dict[RL_COLUMNS[0]], *columns_dict[RL_COLUMNS[1]]], key=lambda x: int(x.split('_')[-1])),
+               *sorted([*columns_dict[RL_COLUMNS[0]],
+                        *columns_dict[RL_COLUMNS[1]],
+                        *columns_dict[RL_COLUMNS[2]]], key=lambda x: int(x.split('_')[-1])),
                RL_PEAKS,
                RL_LOSS,
                ]

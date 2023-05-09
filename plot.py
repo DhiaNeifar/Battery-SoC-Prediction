@@ -97,3 +97,18 @@ def plot_distributions(signal, x_axis, normal_dists, show_sum=True):
     plt.ylabel('Probability Density')
     plt.legend()
     plt.show()
+
+
+def plot_3D_signals(data, signals, peaks, f_GDRT):
+    f_GDRT = np.squeeze(f_GDRT)
+    fig = plt.figure(figsize=(10, 20))
+    ax = plt.axes(projection='3d')
+    SoCs = data['SoC'].unique()
+    length = f_GDRT.shape
+    for index, signal in enumerate(signals):
+        ax.plot3D(np.log(f_GDRT), SoCs[index] * np.ones(length), np.squeeze(signal),
+                  label=f'Signal {index + 1} | Peaks = {peaks[index]}')
+    ax.legend()
+    ax.invert_yaxis()
+    ax.set_yticks(SoCs)
+    plt.show()
