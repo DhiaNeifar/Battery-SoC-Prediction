@@ -87,7 +87,7 @@ def gradient_descent(signal, f_GDRT, peaks, max_iter=100000, lr_std=100000, plot
     if plot:
         plot_loss(max_iter + 1, Loss)
         plot_distributions(signal, f_GDRT, normal_dists)
-    return _means, np.abs(standard_deviations), amplitudes, Loss
+    return amplitudes, _means, np.abs(standard_deviations), Loss
 
 
 def main():
