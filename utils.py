@@ -28,8 +28,8 @@ def PICKLED_DATA_PATH():
     return os.path.join(PROJECT_PATH(), 'Pickle Data')
 
 
-def CSV_DATA(_lambda=0.1):
-    return os.path.join(PROJECT_PATH(), 'Data', f'data_{_lambda}.csv')
+def CSV_DATA(filename):
+    return os.path.join(PROJECT_PATH(), 'Data', f'{filename}.csv')
 
 
 def unprocessed_pickled_data():
@@ -71,7 +71,7 @@ def get_frequencies():
     return frequencies.reshape((-1, 1))
 
 
-def get_frequencies0(l=4, r=4, _range=400):
+def get_frequencies0(l=8, r=8, _range=400):
     """
     np.logspace customization.
     :param l:
@@ -85,46 +85,70 @@ def get_frequencies0(l=4, r=4, _range=400):
 def extract_line(dataframe, index=0):
     """
     :param dataframe: Processed data
-    :param index: chosen index
+    :param index: Chosen index
     :return: return desirable line (Z IMPEDANCE) from dataframe.
     """
+    print(dataframe.iloc[index][['CellID', 'SoC', 'Cycle']])
     return np.array(dataframe.iloc[index]['Zmeas']).reshape((-1, 1))
 
 
-def divide_signal(x):
+def divide_signal(signal, parasites=True):
     """
     Divide GDRT Solution X
-    :param x:
+    :param signal:
+    :param parasites: If parasites are into equation
     :return: R, L, C (Parasites), RC & RL
     """
-    constant = 3
-    length = (len(x) - 3) // 2
-    L, C = x[1, 0], 1 / x[2, 0]
-    RC, RL = x[constant: length + constant, :], x[length + constant:, :]
+    constant = 1
+    if parasites:
+        constant = 3
+    length = (len(signal) - constant) // 2
+    L, C = signal[1, 0], 1 / signal[2, 0]
+    RC, RL = signal[constant: length + constant, :], signal[length + constant:, :]
     return L, C, RC, RL
 
 
-def extract_peaks(x, f_GDRT):
+def extract_peaks(signal, f_GDRT):
     # TODO : Enhance peaks extraction using differential techniques
     """
     Find peaks in a signal.
-    :param x:
+    :param signal:
     :param f_GDRT:
     :return: Dictionary with means e.i frequencies and their amplitudes.
     """
-    x, f_GDRT = np.squeeze(x), np.squeeze(f_GDRT)
+    signal, f_GDRT = np.squeeze(signal), np.squeeze(f_GDRT)
     peaks = []
-    for index in range(len(x) - 2):
-        if x[index - 1] < x[index] and x[index + 1] < x[index]:
-            peaks.append({'mean': f_GDRT[index], 'amplitude': x[index]})
+    for index in range(len(signal) - 2):
+        if signal[index - 1] < signal[index] and signal[index + 1] < signal[index]:
+            peaks.append({'mean': f_GDRT[index], 'amplitude': signal[index]})
     return peaks
 
 
-def amplitudes_means_from_peaks(peaks):
+def amplitudes_means_std_from_peaks(peaks):
     if peaks:
-        return np.array([peak['amplitude'] for peak in peaks]).reshape((len(peaks), 1)), np.array([peak['mean'] for peak in peaks]).reshape((len(peaks), 1))
+        if len(peaks[0]) == 2:
+            return np.array([peak['amplitude'] for peak in peaks]).reshape((len(peaks), 1)), \
+                np.array([peak['mean'] for peak in peaks]).reshape((len(peaks), 1)), \
+                np.zeros((len(peaks), 1))
+
+        if len(peaks[0]) == 3:
+            return np.array([peak['amplitude'] for peak in peaks]).reshape((len(peaks), 1)), \
+                np.array([peak['mean'] for peak in peaks]).reshape((len(peaks), 1)), \
+                np.array([peak['std'] for peak in peaks]).reshape((len(peaks), 1))
+
     null = np.zeros((1, 1))
-    return null, null
+    return null, null, null
+
+
+def amplitudes_means_standard_deviations_from_df(line, peaks=7):
+    amplitudes = np.array(line[[f'RC_amplitude_{i}' for i in range(1, peaks + 1)]]).reshape((-1, 1))
+    means = np.array(line[[f'RC_mean_{i}' for i in range(1, peaks + 1)]]).reshape((-1, 1))
+    standard_deviations = np.array(line[[f'RC_standard_deviation_{i}' for i in range(1, peaks + 1)]]).reshape((-1, 1))
+    return amplitudes[~np.all(amplitudes == 0, axis=1)].astype('float64'), means[~np.all(means == 0, axis=1)].astype('float64'), standard_deviations[~np.all(standard_deviations == 0, axis=1)].astype('float64')
+
+
+def amp_means_std_to_peaks(amplitudes, means, standard_deviations):
+    return [{'mean': means[i, 0], 'amplitude':amplitudes[i, 0], 'std': standard_deviations[i, 0]} for i in range(amplitudes.shape[0])]
 
 
 def find_std(means):
@@ -142,15 +166,15 @@ def find_std(means):
         elif x1 == 0:
             new_stds[i - 1, 0] = x / 3
         else:
-            new_stds[i - 1, 0] = min(x, x1) / 3
+            new_stds[i - 1, 0] = (x + x1) / 6
         x = x1
         i += 1
     new_stds[i - 1, 0] = x / 3
     return new_stds
 
 
-def normal_distribution(f_GDRT, amplitude, mean, std):
-    return (amplitude * np.exp(-0.5 * ((f_GDRT - mean) / std) ** 2)).T
+def normal_distribution(f_GDRT, amplitudes, means, standard_deviations):
+    return (amplitudes * np.exp(-0.5 * ((f_GDRT - means) / standard_deviations) ** 2)).T
 
 
 def extract_distributions(dataframe, index):
@@ -170,37 +194,3 @@ def find_max(variable):
         x = variable[i].shape[0]
         maximum = max(x, maximum)
     return maximum
-
-
-def get_columns(COLUMNS, pickle_files, columns_dict):
-    def get_RLC_columns(name, RC_list, RL_list):
-        def extract_column(ending, files_list):
-            return [file for file in files_list if file.split('_')[-1] != ending]
-        return f'RC_{name}', extract_column(name, RC_list), f'RL_{name}', extract_column(name, RL_list)
-        
-    pickle_files.sort()
-    PARASITE_COLUMNS = pickle_files[2::-1]
-    pickle_files = pickle_files[3:]
-    RC_files = pickle_files[:len(pickle_files) // 2 + 1]
-    RL_files = pickle_files[len(pickle_files) // 2:]
-
-    RC_PEAKS, RC_files, RL_PEAKS, RL_files = get_RLC_columns('peaks', RC_files, RL_files)
-    RC_LOSS, RC_COLUMNS, RL_LOSS, RL_COLUMNS = get_RLC_columns('Loss', RC_files, RL_files)
-
-    print(RC_COLUMNS, RL_COLUMNS)
-
-    COLUMNS = [*COLUMNS,
-               *PARASITE_COLUMNS,
-               *sorted([*columns_dict[RC_COLUMNS[0]],
-                        *columns_dict[RC_COLUMNS[1]],
-                        *columns_dict[RC_COLUMNS[2]]],
-                       key=lambda x: int(x.split('_')[-1])),
-               RC_PEAKS,
-               RC_LOSS,
-               *sorted([*columns_dict[RL_COLUMNS[0]],
-                        *columns_dict[RL_COLUMNS[1]],], key=lambda x: int(x.split('_')[-1])),
-               RL_PEAKS,
-               RL_LOSS,
-               ]
-
-    return COLUMNS

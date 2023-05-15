@@ -1,17 +1,17 @@
 import numpy
 
-from utils import DATA_PATH, extract_line, divide_signal, extract_peaks, \
+from utils import PROJECT_PATH, DATA_PATH, extract_line, divide_signal, extract_peaks, \
     dump_variable, load_variable, find_max, PICKLED_DATA_PATH, unprocessed_pickled_data, \
-    CSV_DATA, get_columns, amplitudes_means_from_peaks
+    CSV_DATA, amplitudes_means_std_from_peaks, get_frequencies, get_frequencies0, \
+    amplitudes_means_standard_deviations_from_df, normal_distribution
 from Preprocessing.tools import LKK, L_curve, GDRT
 from Machine_Learning.gradient_descent import gradient_descent
-from plot import plot_3D_signals
+from plot import plot_3D_signals, plot_distributions, plot_signal
 
 from scipy.io import loadmat
 import pandas as pd
 import numpy as np
 import os
-from tqdm import tqdm
 
 
 def Formatting(unprocessed, cycle=True):
@@ -67,20 +67,21 @@ def pickle_data(data, f, f_GDRT):
     :param f_GDRT:
     :return:
     """
+    parasites = False
     R, L, C = [], [], []
     RC_peaks_length, RL_peaks_length = [], []
     RC_means, RC_standard_deviations, RC_amplitudes, RC_Loss = [], [], [], []
     RL_means, RL_standard_deviations, RL_amplitudes, RL_Loss = [], [], [], []
-
-    for line in range(len(data)):
-        print(line)
+    length = len(data)
+    for index, line in enumerate(range(length), 1):
+        print(f'{index}/{length}')
         Z = extract_line(data, index=line)
 
         Z = LKK(f, f_GDRT, Z)
 
         r = np.min(Z.real)
-        A, x, b, b_hat, residuals = GDRT(f, f_GDRT, Z - r, _lambda=0.1)
-        l, c, RC, RL = divide_signal(x)
+        A, x, b, b_hat, residuals = GDRT(f, f_GDRT, Z - r, _lambda=0.1, parasites=parasites)
+        l, c, RC, RL = divide_signal(x, parasites=parasites)
 
         R.append(r)
         L.append(l)
@@ -90,8 +91,9 @@ def pickle_data(data, f, f_GDRT):
         RC_peaks_length.append(len(RC_peaks))
 
         rc_amplitudes, rc_means, rc_standard_deviations, rc_loss = gradient_descent(RC, f_GDRT, RC_peaks,
+                                                                                    parameters=['s'],
+                                                                                    peak=None, search_std=True,
                                                                                     plot=False)
-
         RC_means.append(rc_means)
         RC_standard_deviations.append(rc_standard_deviations)
         RC_amplitudes.append(rc_amplitudes)
@@ -99,9 +101,11 @@ def pickle_data(data, f, f_GDRT):
 
         RL_peaks = extract_peaks(RL, f_GDRT)
         RL_peaks_length.append(len(RL_peaks))
-        rl_means, rl_standard_deviations, rl_amplitudes, rl_loss = gradient_descent(RL, f_GDRT, RL_peaks,
-                                                                                    plot=False)
 
+        rl_amplitudes, rl_means, rl_standard_deviations, rl_loss = gradient_descent(RL, f_GDRT, RL_peaks,
+                                                                                    parameters=['s'],
+                                                                                    peak=None, search_std=True,
+                                                                                    plot=False)
         RL_means.append(rl_means)
         RL_standard_deviations.append(rl_standard_deviations)
         RL_amplitudes.append(rl_amplitudes)
@@ -127,14 +131,15 @@ def pickle_data(data, f, f_GDRT):
     dump_variable('RL_peaks', RL_peaks_length)
 
 
-def features_engineering(data):
-    # TODO : Fix RL_amplitudes, it doesn't work as algorithm.
+def features_engineering(data, filename):
     """
     Feature engineering the data and saving it in CSV format.
     Create dataframe with features to use for Machine Learning
+    :param filename: filename of saved data as csv
     :param data:
     :return:
     """
+
     def organize_columns(files):
         def reorder_columns(_list) -> list:
             indexes = [0, 3]
@@ -145,14 +150,15 @@ def features_engineering(data):
                 new_list.append(element)
             return new_list
 
-        def create_columns(COLUMNS):
-            peaks = load_variable(COLUMNS[-1])
+        def create_columns(_COLUMNS):
+            peaks = load_variable(_COLUMNS[-1])
             _maximum = max(peaks)
             new_columns = []
-            for column in COLUMNS[:-2]:
+            for column in _COLUMNS[:-2]:
                 new_columns.extend([column[:-1] + f'_{_index}' for _index in range(1, _maximum + 1)])
             new_columns.sort(key=lambda col: int(col.split('_')[-1]))
-            return new_columns + COLUMNS[-2:]
+            return new_columns + _COLUMNS[-2:]
+
         files.sort(reverse=True)
         PARASITES = files[-3:]
         files = files[:-3]
@@ -164,9 +170,7 @@ def features_engineering(data):
         return [*PARASITES, *RC_columns, *RL_columns]
 
     pickle_files = unprocessed_pickled_data()
-
-    NEW_COLUMNS = organize_columns(pickle_files)
-
+    COLUMNS = data.columns
     global pickled_variable
     global _type
     for pickle_file in pickle_files:
@@ -192,23 +196,69 @@ def features_engineering(data):
                         lists[i].append(0)
                 for i in range(maximum):
                     data.insert(len(data.columns), columns[i], lists[i], True)
-    data = data[NEW_COLUMNS]
-    data.to_csv(CSV_DATA(_lambda=0.1), index=False)
+    data = data[[*COLUMNS, *organize_columns(pickle_files)]]
+    data.to_csv(CSV_DATA(filename), index=True)
 
 
 def analyze_peaks(data, f, f_GDRT, cell, theta, cycle):
     data = data[(data['CellID'] == cell) & (data['theta'] == theta) & (data['Cycle'] == cycle)]
-    signals, peaks = [], []
+    RC_signals, RL_signals = [], []
+    parasites = False
     for line in range(len(data)):
         _Z = extract_line(data, index=line)
         Z = LKK(f, f_GDRT, _Z)
         r = np.min(Z.real)
+        _, x, _, _, _ = GDRT(f, f_GDRT, Z - r, _lambda=0.1, regularized=True, parasites=parasites)
+        _, _, RC, RL = divide_signal(x, parasites=parasites)
+        RC_signals.append(RC)
+        RL_signals.append(RL)
+    plot_3D_signals(data, RC_signals, f_GDRT)
+    plot_3D_signals(data, RL_signals, f_GDRT)
+
+
+def postprocessing():
+    f = get_frequencies()
+    f_GDRT = get_frequencies0()
+    _Z = data['Zmeas']
+    Z = LKK(f, f_GDRT, _Z)
+    # plot_IS([_Z, Z], ['Original Signal', 'After LKK Transformation'])
+    r = np.min(Z.real)
+    # _lambda = L_curve(f, f_GDRT, Z)
+    # print(_lambda)
+    A, x, b, b_hat, residuals = GDRT(f, f_GDRT, Z - r, _lambda=0.1, regularized=True)
+    # plot_Residuals(b, b_hat, residuals)
+    L, C, RC, RL = divide_signal(x)
+    RC_peaks = extract_peaks(RC, f_GDRT)
+    plot_signal(RC, f_GDRT, RC_peaks, RC=True)
+
+    _, _, _, _ = gradient_descent(RC, f_GDRT, RC_peaks, parameters='s', peak=None, plot=True)
+
+
+def data_verification():
+    original_data = import_data()
+    data_file = '/home/dhianeifar/PFE/2/data_0.1_PostProcessing_Cell3_Temp25_peak_1_30.csv'
+    new_data = pd.read_csv(os.path.join(PROJECT_PATH(), data_file), index_col=0)
+    new_data = new_data[(new_data['SoC'] == 60) & (new_data['Cycle'] == 20)]
+    index_list = new_data.index.to_list()
+    f = get_frequencies()
+    f_GDRT = get_frequencies0()
+    for index, line in enumerate(index_list):
+        print(f'{index + 1} / {len(index_list)}')
+        _Z = extract_line(original_data, index=line)
+        Z = LKK(f, f_GDRT, _Z)
+        r = np.min(Z.real)
         _, x, _, _, _ = GDRT(f, f_GDRT, Z - r, _lambda=0.1, regularized=True)
         _, _, RC, _ = divide_signal(x)
-        signals.append(RC)
-        peaks.append(len(extract_peaks(RC, f_GDRT)))
-    plot_3D_signals(data, signals, peaks, f_GDRT)
+        data_line = new_data.iloc[index]
+        amplitudes, means, standard_deviations = amplitudes_means_standard_deviations_from_df(data_line)
+        normal_dists = normal_distribution(np.log(np.squeeze(f_GDRT)), amplitudes, np.log(means), standard_deviations)
+        plot_distributions(np.squeeze(RC), np.log(np.squeeze(f_GDRT)), normal_dists)
 
 
 if __name__ == '__main__':
-    import_data()
+    # original_data = import_data()
+    # f = get_frequencies()
+    # f_GDRT = get_frequencies0()
+    # cell, theta, cycle = 3, 25, 18
+    # analyze_peaks(original_data, f, f_GDRT, cell, theta, cycle)
+    data_verification()

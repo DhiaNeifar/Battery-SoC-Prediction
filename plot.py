@@ -1,4 +1,4 @@
-from utils import amplitudes_means_from_peaks, CSV_DATA, extract_distributions, \
+from utils import amplitudes_means_std_from_peaks, CSV_DATA, extract_distributions, \
     normal_distribution
 
 
@@ -24,20 +24,20 @@ def plot_IS(Z, titles):
     plt.show()
 
 
-def plot_signal(signal, freq0, peaks, RC=True):
+def plot_signal(signal, f_GDRT, peaks, RC=True):
     # TODO : Draw small circles on the peaks in red for better readability.
     """
     Plot The signal distribution after GDRT Transformation with x indicating peaks of the signal.
     :param peaks:
     :param signal:
-    :param freq0:
+    :param f_GDRT:
     :param RC: Whether focus on RC distribution or RL
     :return:
     """
     title = 'Generalized Distribution of Relaxation Times '
-    plt.semilogx(np.squeeze(freq0), signal)
+    plt.semilogx(np.squeeze(f_GDRT), np.squeeze(signal))
     if peaks:
-        amplitudes, means = amplitudes_means_from_peaks(peaks)
+        amplitudes, means, _ = amplitudes_means_std_from_peaks(peaks)
         plt.plot(means, amplitudes, 'x', color='black', label='peak')
         plt.legend()
     if RC:
@@ -89,19 +89,21 @@ def plot_distributions(signal, f_GDRT, normal_dists, show_sum=True):
     :param show_sum:
     :return:
     """
+
     ax = np.squeeze(np.exp(f_GDRT))
+    # colors = ['b', 'g', 'r', 'm', 'c', 'y', '0.5']
     for index, distribution in enumerate(normal_dists.T):
         plt.semilogx(ax, distribution, '-', label=f'dist {index + 1}')
     if show_sum:
         plt.semilogx(ax, np.sum(normal_dists, axis=1), '-', label=f'sum')
-    plt.semilogx(ax, signal, '-', color='gray', label='signal')
+    plt.semilogx(ax, signal, '-', label='signal')
     plt.xlabel('Data points')
     plt.ylabel('Probability Density')
     plt.legend()
     plt.show()
 
 
-def plot_3D_signals(data, signals, peaks, f_GDRT):
+def plot_3D_signals(data, signals, f_GDRT):
     f_GDRT = np.squeeze(f_GDRT)
     _ = plt.figure(figsize=(10, 20))
     ax = plt.axes(projection='3d')
@@ -109,7 +111,7 @@ def plot_3D_signals(data, signals, peaks, f_GDRT):
     length = f_GDRT.shape
     for index, signal in enumerate(signals):
         ax.plot3D(np.log(f_GDRT), SoCs[index] * np.ones(length), np.squeeze(signal),
-                  label=f'Signal {index + 1} | Peaks = {peaks[index]}')
+                  label=f'SoC {SoCs[index]}')
     ax.legend()
     ax.invert_yaxis()
     ax.set_yticks(SoCs)

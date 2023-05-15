@@ -25,7 +25,7 @@ def LKK(f, f_GDRT, Z):
     return new_Z.reshape((-1, 1))
 
 
-def GDRT(f, f_GDRT, Z, _lambda=0.3, regularized=True):
+def GDRT(f, f_GDRT, Z, _lambda=0.3, regularized=True, parasites=True):
     """
     Generalized Distribution of Relaxation Function
     :param f:
@@ -33,14 +33,15 @@ def GDRT(f, f_GDRT, Z, _lambda=0.3, regularized=True):
     :param Z:
     :param _lambda: Regularization Parameter
     :param regularized:
+    :param parasites: If we want parasites in params
     :return:
         m : f shape
         n : f0 shape
-        A : GDRT Coefficients   shape ==> (2(m + n) + 3, 2n + 3)
+        A : GDRT Coefficients   shape ==> (2m, 2n + 3)
         x : Solutions           shape ==> (2n + 3, 1)
-        b : [Re(Z), Im(Z)]      shape ==> (2(m + n) + 3, 1)
-        b_hat : A @ x           shape ==> (2(m + n) + 3, 1)
-        residuals : b - b_hat   shape ==> (2(m + n) + 3, 1)
+        b : [Re(Z), Im(Z)]      shape ==> (2m, 1)
+        b_hat : A @ x           shape ==> (2m, 1)
+        residuals : b - b_hat   shape ==> (2m, 1)
     """
 
     m = f.shape[0]
@@ -63,12 +64,18 @@ def GDRT(f, f_GDRT, Z, _lambda=0.3, regularized=True):
         LL = 2 * pi * f
         CC = -1 / (2 * pi * f)
 
-        TMP = np.concatenate((np.concatenate((RR, X1), axis=1), np.concatenate((X2, LL, CC), axis=1)), axis=0)
+        TMP = np.concatenate((RR, X2), axis=0)
+        if parasites:
+            TMP = np.concatenate((np.concatenate((RR, X1), axis=1), np.concatenate((X2, LL, CC), axis=1)), axis=0)
 
         return np.concatenate((TMP, _A), axis=1)
 
     def calculate_b(impedance):
-        s = 2 * n + 3
+        constant = 1
+        if parasites:
+            constant = 3
+        s = 2 * n
+        s += constant
         return np.concatenate((impedance.real, impedance.imag, np.zeros((s, 1))), axis=0)
 
     A = calculate_A(f, f_GDRT)
@@ -79,7 +86,6 @@ def GDRT(f, f_GDRT, Z, _lambda=0.3, regularized=True):
 
     x = nnls(A, np.squeeze(b), maxiter=10 ** 9)[0]
     x = np.expand_dims(x, axis=1)
-
     b_hat = A @ x
     residuals = b - b_hat
 
