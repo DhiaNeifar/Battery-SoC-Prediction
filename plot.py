@@ -5,6 +5,7 @@ from utils import amplitudes_means_std_from_peaks, CSV_DATA, extract_distributio
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import threading
 
 
 # TODO : Cleaner + Documented Code
@@ -119,7 +120,7 @@ def plot_3D_signals(data, signals, f_GDRT):
 
 
 def verify_RC_peaks(signal, line, f_GDRT):
-    final_data = pd.read_csv(CSV_DATA(_lambda=0.1))
+    final_data = pd.read_csv(CSV_DATA('data'))
     amplitudes, means, standard_deviations = extract_distributions(final_data, line)
 
     signal, f_GDRT = np.squeeze(signal), np.squeeze(f_GDRT)

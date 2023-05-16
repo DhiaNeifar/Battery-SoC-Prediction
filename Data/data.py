@@ -6,12 +6,14 @@ from utils import PROJECT_PATH, DATA_PATH, extract_line, divide_signal, extract_
     amplitudes_means_standard_deviations_from_df, normal_distribution
 from Preprocessing.tools import LKK, L_curve, GDRT
 from Machine_Learning.gradient_descent import gradient_descent
-from plot import plot_3D_signals, plot_distributions, plot_signal
+from plot import plot_3D_signals, plot_distributions, plot_signal, plot_IS
 
 from scipy.io import loadmat
 import pandas as pd
 import numpy as np
 import os
+import time
+import threading
 
 
 def Formatting(unprocessed, cycle=True):
@@ -76,7 +78,7 @@ def pickle_data(data, f, f_GDRT):
     for index, line in enumerate(range(length), 1):
         print(f'{index}/{length}')
         Z = extract_line(data, index=line)
-
+        print(Z)
         Z = LKK(f, f_GDRT, Z)
 
         r = np.min(Z.real)
@@ -217,48 +219,55 @@ def analyze_peaks(data, f, f_GDRT, cell, theta, cycle):
 
 
 def postprocessing():
+    data = import_data()
     f = get_frequencies()
     f_GDRT = get_frequencies0()
-    _Z = data['Zmeas']
+    line = 586
+    _Z = extract_line(data, index=line)
     Z = LKK(f, f_GDRT, _Z)
-    # plot_IS([_Z, Z], ['Original Signal', 'After LKK Transformation'])
+    plot_IS([_Z, Z], ['Original Signal', 'After LKK Transformation'])
     r = np.min(Z.real)
     # _lambda = L_curve(f, f_GDRT, Z)
     # print(_lambda)
-    A, x, b, b_hat, residuals = GDRT(f, f_GDRT, Z - r, _lambda=0.1, regularized=True)
-    # plot_Residuals(b, b_hat, residuals)
-    L, C, RC, RL = divide_signal(x)
-    RC_peaks = extract_peaks(RC, f_GDRT)
-    plot_signal(RC, f_GDRT, RC_peaks, RC=True)
 
-    _, _, _, _ = gradient_descent(RC, f_GDRT, RC_peaks, parameters='s', peak=None, plot=True)
+
+def split_data(theta = 25):
+    data_file = 'data_0.1.csv'
+    data_path = os.path.join(PROJECT_PATH(), 'Data')
+    df = pd.read_csv(os.path.join(data_path, data_file))
+    df = df[df['theta'] == theta]
+    cells = [i for i in range(1, 5)]
+    for cell in cells:
+        dataframe = df[df['CellID'] == cell]
+        dataframe_name = ''.join([data_file[:-4], f'_CELL{cell}', f'_TEMP{theta}_', '.csv'])
+
+        dataframe.to_csv(os.path.join(data_path, dataframe_name), index=True)
 
 
 def data_verification():
+    cell, theta, soc, cycle = 3, 25, 60, 16
+
     original_data = import_data()
-    data_file = '/home/dhianeifar/PFE/2/data_0.1_PostProcessing_Cell3_Temp25_peak_1_30.csv'
+
+    data_file = '/home/dhianeifar/PFE/3/data_0.1_PostProcessing_Cell3_Temp25_peak_1_30_5.csv'
     new_data = pd.read_csv(os.path.join(PROJECT_PATH(), data_file), index_col=0)
-    new_data = new_data[(new_data['SoC'] == 60) & (new_data['Cycle'] == 20)]
-    index_list = new_data.index.to_list()
+    new_data = new_data[(new_data['CellID'] == cell) &
+                        (new_data['theta'] == theta) &
+                        (new_data['SoC'] == soc) &
+                        (new_data['Cycle'] == cycle)]
+    index = new_data.index.to_list()[0]
     f = get_frequencies()
     f_GDRT = get_frequencies0()
-    for index, line in enumerate(index_list):
-        print(f'{index + 1} / {len(index_list)}')
-        _Z = extract_line(original_data, index=line)
-        Z = LKK(f, f_GDRT, _Z)
-        r = np.min(Z.real)
-        _, x, _, _, _ = GDRT(f, f_GDRT, Z - r, _lambda=0.1, regularized=True)
-        _, _, RC, _ = divide_signal(x)
-        data_line = new_data.iloc[index]
-        amplitudes, means, standard_deviations = amplitudes_means_standard_deviations_from_df(data_line)
-        normal_dists = normal_distribution(np.log(np.squeeze(f_GDRT)), amplitudes, np.log(means), standard_deviations)
-        plot_distributions(np.squeeze(RC), np.log(np.squeeze(f_GDRT)), normal_dists)
+
+    _Z = extract_line(original_data, index=index)
+    Z = LKK(f, f_GDRT, _Z)
+    r = np.min(Z.real)
+    _, x, _, _, _ = GDRT(f, f_GDRT, Z - r, _lambda=0.1, regularized=True)
+    _, _, RC, _ = divide_signal(x)
+    amplitudes, means, standard_deviations = amplitudes_means_standard_deviations_from_df(new_data)
+    normal_dists = normal_distribution(np.log(np.squeeze(f_GDRT)), amplitudes, np.log(means), standard_deviations)
+    plot_distributions(np.squeeze(RC), np.log(np.squeeze(f_GDRT)), normal_dists)
 
 
 if __name__ == '__main__':
-    # original_data = import_data()
-    # f = get_frequencies()
-    # f_GDRT = get_frequencies0()
-    # cell, theta, cycle = 3, 25, 18
-    # analyze_peaks(original_data, f, f_GDRT, cell, theta, cycle)
-    data_verification()
+    split_data()

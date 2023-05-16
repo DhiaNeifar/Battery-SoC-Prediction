@@ -71,7 +71,7 @@ def get_frequencies():
     return frequencies.reshape((-1, 1))
 
 
-def get_frequencies0(l=8, r=8, _range=400):
+def get_frequencies0(l=4, r=4, _range=400):
     """
     np.logspace customization.
     :param l:

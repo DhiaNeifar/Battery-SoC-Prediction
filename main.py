@@ -10,18 +10,13 @@ from plot import plot_IS, plot_signal, plot_Residuals, plot_distributions, \
 import numpy as np
 import pandas as pd
 import os
-import threading
 
 
 def main():
     original_data = import_data()
     f = get_frequencies()
     f_GDRT = get_frequencies0()
-    original_data = original_data[(original_data['CellID'] == 3) &
-                                  (original_data['theta'] == 25)]
 
-    # pickle_data(original_data, f, f_GDRT)
-    # features_engineering(original_data, 'data_0.1_NOPARASITES.csv')
 
 
 if __name__ == '__main__':
